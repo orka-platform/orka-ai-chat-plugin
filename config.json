@@ -1,0 +1,152 @@
+{
+  "name": "llm",
+  "version": "0.1.0",
+  "description": "Generic LLM plugin with OpenAI support",
+  "tags": [
+    "llm",
+    "openai",
+    "ai"
+  ],
+  "methods": {
+    "Chat": {
+      "description": "Chat-style completion using messages",
+      "args": [
+        {
+          "name": "apiKey",
+          "type": "string",
+          "description": "API key (or set env OPENAI_API_KEY)",
+          "required": false
+        },
+        {
+          "name": "model",
+          "type": "enum",
+          "description": "Model name",
+          "required": true,
+          "enumValues": [
+            "gpt-4o-mini",
+            "gpt-4o",
+            "gpt-4.1-mini",
+            "gpt-4.1",
+            "gpt-3.5-turbo",
+            "gpt-3.5-turbo-instruct"
+          ]
+        },
+        {
+          "name": "messages",
+          "type": "array",
+          "description": "Array of {role, content}",
+          "required": false
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "description": "Fallback prompt if messages not provided",
+          "required": false
+        },
+        {
+          "name": "temperature",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "maxTokens",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "topP",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "stop",
+          "type": "array",
+          "required": false
+        },
+        {
+          "name": "stream",
+          "type": "boolean",
+          "required": false
+        }
+      ],
+      "returns": [
+        {
+          "name": "content",
+          "type": "string",
+          "description": "Assistant message content"
+        },
+        {
+          "name": "finishReason",
+          "type": "string"
+        },
+        {
+          "name": "usage",
+          "type": "object"
+        }
+      ]
+    },
+    "Complete": {
+      "description": "Text completion from a prompt",
+      "args": [
+        {
+          "name": "apiKey",
+          "type": "string",
+          "required": false
+        },
+        {
+          "name": "model",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "gpt-4o-mini",
+            "gpt-4o",
+            "gpt-4.1-mini",
+            "gpt-4.1",
+            "gpt-3.5-turbo",
+            "gpt-3.5-turbo-instruct"
+          ]
+        },
+        {
+          "name": "prompt",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "temperature",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "maxTokens",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "topP",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "stop",
+          "type": "array",
+          "required": false
+        }
+      ],
+      "returns": [
+        {
+          "name": "text",
+          "type": "string",
+          "description": "Completion text"
+        },
+        {
+          "name": "finishReason",
+          "type": "string"
+        },
+        {
+          "name": "usage",
+          "type": "object"
+        }
+      ]
+    }
+  }
+}
