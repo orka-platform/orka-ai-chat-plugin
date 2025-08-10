@@ -13,25 +13,16 @@ import (
 )
 
 type Client struct {
-	apiKey  string
-	baseURL string
-	client  oa.Client
+	apiKey string
+	client oa.Client
 }
 
-func New(apiKey string, baseURL string) *Client {
-	if baseURL == "" {
-		baseURL = "https://api.openai.com"
-	}
+func New(apiKey string) *Client {
 	httpClient := &http.Client{Timeout: 60 * time.Second}
-	opts := []option.RequestOption{
-		option.WithAPIKey(apiKey),
-		option.WithBaseURL(baseURL),
-		option.WithHTTPClient(httpClient),
-	}
+	opts := []option.RequestOption{option.WithAPIKey(apiKey), option.WithHTTPClient(httpClient)}
 	return &Client{
-		apiKey:  apiKey,
-		baseURL: baseURL,
-		client:  oa.NewClient(opts...),
+		apiKey: apiKey,
+		client: oa.NewClient(opts...),
 	}
 }
 
@@ -41,11 +32,11 @@ func (c *Client) Chat(ctx context.Context, req p.ChatRequest) (map[string]any, e
 	for _, m := range req.Messages {
 		switch m.Role {
 		case "system":
-			messages = append(messages, oa.ChatCompletionMessageParamUnion{OfSystem: &oa.ChatCompletionSystemMessageParam{Content: oa.ChatCompletionSystemMessageParamContentUnion{OfString: oa.String(m.Content)}}})
+			messages = append(messages, oa.SystemMessage(m.Content))
 		case "assistant":
-			messages = append(messages, oa.ChatCompletionMessageParamUnion{OfAssistant: &oa.ChatCompletionAssistantMessageParam{Content: oa.ChatCompletionAssistantMessageParamContentUnion{OfString: oa.String(m.Content)}}})
+			messages = append(messages, oa.AssistantMessage(m.Content))
 		default:
-			messages = append(messages, oa.ChatCompletionMessageParamUnion{OfUser: &oa.ChatCompletionUserMessageParam{Content: oa.ChatCompletionUserMessageParamContentUnion{OfString: oa.String(m.Content)}}})
+			messages = append(messages, oa.UserMessage(m.Content))
 		}
 	}
 	params := oa.ChatCompletionNewParams{

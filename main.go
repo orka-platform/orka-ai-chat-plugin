@@ -146,7 +146,7 @@ func makeProviderFromModel(model string, args map[string]any) (providers.Provide
 		if apiKey == "" {
 			return nil, errors.New("missing OpenAI API key (apiKey arg or OPENAI_API_KEY env)")
 		}
-		return openai.New(apiKey, ""), nil
+		return openai.New(apiKey), nil
 	}
 	return nil, fmt.Errorf("unsupported model: %s", model)
 }
