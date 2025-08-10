@@ -9,7 +9,6 @@ import (
 	"log"
 	"net"
 	"net/rpc"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -141,10 +140,7 @@ func makeProviderFromModel(model string, args map[string]any) (providers.Provide
 	if strings.HasPrefix(lower, "gpt-") || strings.Contains(lower, "gpt") || strings.HasPrefix(lower, "o1") {
 		apiKey := getString(args, "apiKey", "")
 		if apiKey == "" {
-			apiKey = os.Getenv("OPENAI_API_KEY")
-		}
-		if apiKey == "" {
-			return nil, errors.New("missing OpenAI API key (apiKey arg or OPENAI_API_KEY env)")
+			return nil, errors.New("missing OpenAI API key: pass apiKey argument")
 		}
 		return openai.New(apiKey), nil
 	}

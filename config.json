@@ -14,8 +14,8 @@
         {
           "name": "apiKey",
           "type": "string",
-          "description": "API key (or set env OPENAI_API_KEY)",
-          "required": false
+          "description": "OpenAI API key",
+          "required": true
         },
         {
           "name": "model",
@@ -91,7 +91,7 @@
         {
           "name": "apiKey",
           "type": "string",
-          "required": false
+          "required": true
         },
         {
           "name": "model",

@@ -19,7 +19,11 @@ type Client struct {
 
 func New(apiKey string) *Client {
 	httpClient := &http.Client{Timeout: 60 * time.Second}
-	opts := []option.RequestOption{option.WithAPIKey(apiKey), option.WithHTTPClient(httpClient)}
+	opts := []option.RequestOption{
+		option.WithAPIKey(apiKey),
+		option.WithHTTPClient(httpClient),
+		option.WithBaseURL("https://api.openai.com/v1"),
+	}
 	return &Client{
 		apiKey: apiKey,
 		client: oa.NewClient(opts...),
