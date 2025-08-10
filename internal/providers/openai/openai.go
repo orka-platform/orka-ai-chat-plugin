@@ -2,8 +2,6 @@ package openai
 
 import (
 	"context"
-	"fmt"
-	"net"
 	"net/http"
 	"time"
 
@@ -20,23 +18,11 @@ type Client struct {
 }
 
 func New(apiKey string) *Client {
-	transport := &http.Transport{
-		Proxy:                 http.ProxyFromEnvironment,
-		DialContext:           (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
-		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          100,
-		MaxIdleConnsPerHost:   10,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-		DisableCompression:    false,
-	}
-	httpClient := &http.Client{Transport: transport, Timeout: 120 * time.Second}
+	httpClient := &http.Client{Timeout: 60 * time.Second}
 	opts := []option.RequestOption{
 		option.WithAPIKey(apiKey),
-		option.WithBaseURL("https://api.openai.com/v1"),
 		option.WithHTTPClient(httpClient),
-		option.WithMaxRetries(5),
+		option.WithBaseURL("https://api.openai.com/v1"),
 	}
 	return &Client{
 		apiKey: apiKey,
@@ -73,22 +59,22 @@ func (c *Client) Chat(ctx context.Context, req p.ChatRequest) (map[string]any, e
 
 	resp, err := c.client.Chat.Completions.New(ctx, params)
 	if err != nil {
-		return nil, fmt.Errorf("openai chat error: %w", err)
+		return nil, err
 	}
 
 	result := map[string]any{}
-	result["id"] = resp.ID
-	result["model"] = resp.Model
+	result["id"] = string(resp.ID)
+	result["model"] = string(resp.Model)
 	if len(resp.Choices) > 0 {
 		ch := resp.Choices[0]
-		result["finishReason"] = ch.FinishReason
-		result["content"] = ch.Message.Content
-		result["role"] = ch.Message.Role
+		result["finishReason"] = string(ch.FinishReason)
+		result["content"] = string(ch.Message.Content)
+		result["role"] = string(ch.Message.Role)
 	}
 	result["usage"] = map[string]any{
-		"promptTokens":     resp.Usage.PromptTokens,
-		"completionTokens": resp.Usage.CompletionTokens,
-		"totalTokens":      resp.Usage.TotalTokens,
+		"promptTokens":     int64(resp.Usage.PromptTokens),
+		"completionTokens": int64(resp.Usage.CompletionTokens),
+		"totalTokens":      int64(resp.Usage.TotalTokens),
 	}
 	return result, nil
 }

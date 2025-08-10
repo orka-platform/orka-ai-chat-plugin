@@ -28,28 +28,37 @@ func init() {
 	gob.Register([]any{})
 	gob.Register(map[string]string{})
 	gob.Register([]string{})
+	// Register numeric types that OpenAI API returns
+	gob.Register(int64(0))
+	gob.Register(float64(0))
 }
 
 func (p *LlmPlugin) CallMethod(req sdk.Request, res *sdk.Response) error {
+	log.Printf("Received method: %s", req.Method)
 	method := normalizeMethod(req.Method)
 	switch method {
 	case "Chat":
 		out, err := handleChat(req.Args)
 		if err != nil {
+			log.Printf("Chat error: %v", err)
 			*res = sdk.Response{Success: false, Error: err.Error()}
 			return nil
 		}
+		log.Printf("Chat success, data: %+v", out)
 		*res = sdk.Response{Success: true, Data: out}
 		return nil
 	case "Complete":
 		out, err := handleComplete(req.Args)
 		if err != nil {
+			log.Printf("Complete error: %v", err)
 			*res = sdk.Response{Success: false, Error: err.Error()}
 			return nil
 		}
+		log.Printf("Complete success, data: %+v", out)
 		*res = sdk.Response{Success: true, Data: out}
 		return nil
 	default:
+		log.Printf("Unknown method: %s", req.Method)
 		*res = sdk.Response{Success: false, Error: fmt.Sprintf("unknown method: %s", req.Method)}
 		return nil
 	}
