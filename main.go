@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -35,40 +36,82 @@ func init() {
 
 func (p *LlmPlugin) CallMethod(req sdk.Request, res *sdk.Response) error {
 	log.Printf("Received method: %s", req.Method)
-	method := normalizeMethod(req.Method)
-	switch method {
+
+	switch req.Method {
+	case "Ping":
+		log.Printf("Processing Ping request")
+		*res = sdk.Response{
+			Success: true,
+			Data:    map[string]any{"message": "pong"},
+		}
+		return nil
 	case "Chat":
-		out, err := handleChat(req.Args)
-		if err != nil {
-			log.Printf("Chat error: %v", err)
-			*res = sdk.Response{Success: false, Error: err.Error()}
-			return nil
-		}
-		log.Printf("Chat success, data: %+v", out)
-		*res = sdk.Response{Success: true, Data: out}
-		return nil
+		log.Printf("Processing Chat request")
+		err := handleChatDirect(req.Args, res)
+		return err
 	case "Complete":
-		out, err := handleComplete(req.Args)
-		if err != nil {
-			log.Printf("Complete error: %v", err)
-			*res = sdk.Response{Success: false, Error: err.Error()}
-			return nil
-		}
-		log.Printf("Complete success, data: %+v", out)
-		*res = sdk.Response{Success: true, Data: out}
-		return nil
+		log.Printf("Processing Complete request")
+		err := handleCompleteDirect(req.Args, res)
+		return err
 	default:
 		log.Printf("Unknown method: %s", req.Method)
-		*res = sdk.Response{Success: false, Error: fmt.Sprintf("unknown method: %s", req.Method)}
+		*res = sdk.Response{
+			Success: false,
+			Error:   fmt.Sprintf("unknown method: %s", req.Method),
+		}
 		return nil
 	}
 }
 
-func normalizeMethod(m string) string {
-	if m == "" {
-		return m
+func handleChatDirect(args map[string]any, res *sdk.Response) error {
+	apiKey, _ := args["apiKey"].(string)
+	model, _ := args["model"].(string)
+
+	if apiKey == "" || model == "" {
+		*res = sdk.Response{
+			Success: false,
+			Error:   "apiKey and model are required",
+		}
+		return nil
 	}
-	return strings.ToUpper(m[:1]) + m[1:]
+
+	log.Printf("Making OpenAI chat request with model: %s", model)
+
+	// Try to call OpenAI
+	out, err := handleChat(args)
+	if err != nil {
+		log.Printf("Chat error: %v", err)
+		*res = sdk.Response{Success: false, Error: err.Error()}
+	} else {
+		log.Printf("Chat success")
+		*res = sdk.Response{Success: true, Data: out}
+	}
+	return nil
+}
+
+func handleCompleteDirect(args map[string]any, res *sdk.Response) error {
+	apiKey, _ := args["apiKey"].(string)
+	model, _ := args["model"].(string)
+
+	if apiKey == "" || model == "" {
+		*res = sdk.Response{
+			Success: false,
+			Error:   "apiKey and model are required",
+		}
+		return nil
+	}
+
+	log.Printf("Making OpenAI complete request with model: %s", model)
+
+	out, err := handleComplete(args)
+	if err != nil {
+		log.Printf("Complete error: %v", err)
+		*res = sdk.Response{Success: false, Error: err.Error()}
+	} else {
+		log.Printf("Complete success")
+		*res = sdk.Response{Success: true, Data: out}
+	}
+	return nil
 }
 
 func handleChat(args map[string]any) (map[string]any, error) {
@@ -337,18 +380,23 @@ func filterCompleteOutput(out map[string]any) map[string]any {
 func main() {
 	port := flag.Int("port", 0, "TCP port for RPC server (required)")
 	flag.Parse()
+
 	if *port == 0 {
-		log.Fatal("missing --port/-port")
+		fmt.Fprintln(os.Stderr, "Missing required --port argument")
+		os.Exit(1)
 	}
 
-	if err := rpc.Register(&LlmPlugin{}); err != nil {
-		log.Fatal(err)
-	}
-	addr := fmt.Sprintf("127.0.0.1:%d", *port)
-	ln, err := net.Listen("tcp", addr)
+	err := rpc.Register(&LlmPlugin{})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("RPC register error: %v", err)
 	}
-	log.Printf("llm plugin listening on %s", addr)
-	rpc.Accept(ln)
+
+	addr := fmt.Sprintf("127.0.0.1:%d", *port)
+	listener, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen on %s: %v", addr, err)
+	}
+
+	fmt.Printf("LLM plugin listening on %s\n", addr)
+	rpc.Accept(listener)
 }

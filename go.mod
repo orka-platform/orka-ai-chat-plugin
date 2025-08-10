@@ -1,10 +1,10 @@
 module orka-ai-chat-plugin
 
-go 1.21
+go 1.23.2
 
 require (
 	github.com/openai/openai-go/v2 v2.0.2
-	github.com/orka-platform/orka-plugin-sdk v0.0.0
+	github.com/orka-platform/orka-plugin-sdk v0.1.0
 )
 
 require (
@@ -13,5 +13,3 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 )
-
-replace github.com/orka-platform/orka-plugin-sdk => ./sdk

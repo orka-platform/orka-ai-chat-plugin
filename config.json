@@ -8,6 +8,17 @@
     "ai"
   ],
   "methods": {
+    "Ping": {
+      "description": "Simple test method",
+      "args": [],
+      "returns": [
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Pong response"
+        }
+      ]
+    },
     "Chat": {
       "description": "Chat-style completion using messages",
       "args": [
