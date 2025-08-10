@@ -2,6 +2,8 @@ package openai
 
 import (
 	"context"
+	"fmt"
+	"net"
 	"net/http"
 	"time"
 
@@ -18,11 +20,23 @@ type Client struct {
 }
 
 func New(apiKey string) *Client {
-	httpClient := &http.Client{Timeout: 60 * time.Second}
+	transport := &http.Transport{
+		Proxy:                 http.ProxyFromEnvironment,
+		DialContext:           (&net.Dialer{Timeout: 10 * time.Second, KeepAlive: 60 * time.Second}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		MaxIdleConnsPerHost:   10,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DisableCompression:    false,
+	}
+	httpClient := &http.Client{Transport: transport, Timeout: 120 * time.Second}
 	opts := []option.RequestOption{
 		option.WithAPIKey(apiKey),
-		option.WithHTTPClient(httpClient),
 		option.WithBaseURL("https://api.openai.com/v1"),
+		option.WithHTTPClient(httpClient),
+		option.WithMaxRetries(5),
 	}
 	return &Client{
 		apiKey: apiKey,
@@ -59,7 +73,7 @@ func (c *Client) Chat(ctx context.Context, req p.ChatRequest) (map[string]any, e
 
 	resp, err := c.client.Chat.Completions.New(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("openai chat error: %w", err)
 	}
 
 	result := map[string]any{}
