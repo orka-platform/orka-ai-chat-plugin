@@ -1,6 +1,6 @@
 {
-  "name": "llm",
-  "version": "0.1.0",
+  "name": "LLM",
+  "version": "v0.0.1",
   "description": "Generic LLM plugin with OpenAI support",
   "tags": [
     "llm",
