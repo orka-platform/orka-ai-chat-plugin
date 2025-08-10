@@ -89,7 +89,7 @@ func handleChat(args map[string]any) (map[string]any, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	return prov.Chat(ctx, providers.ChatRequest{
+	out, err := prov.Chat(ctx, providers.ChatRequest{
 		Model:       model,
 		Messages:    messages,
 		Temperature: temperature,
@@ -98,6 +98,10 @@ func handleChat(args map[string]any) (map[string]any, error) {
 		Stop:        stop,
 		Stream:      stream,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return filterChatOutput(out), nil
 }
 
 func handleComplete(args map[string]any) (map[string]any, error) {
@@ -120,7 +124,7 @@ func handleComplete(args map[string]any) (map[string]any, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	return prov.Complete(ctx, providers.TextRequest{
+	out, err := prov.Complete(ctx, providers.TextRequest{
 		Model:       model,
 		Prompt:      prompt,
 		Temperature: temperature,
@@ -128,6 +132,10 @@ func handleComplete(args map[string]any) (map[string]any, error) {
 		TopP:        topP,
 		Stop:        stop,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return filterCompleteOutput(out), nil
 }
 
 func makeProvider(name string, args map[string]any) (providers.Provider, error) { // backwards compatibility
@@ -284,6 +292,37 @@ func extractMessages(args map[string]any) []providers.ChatMessage {
 		}
 	}
 	return out
+}
+
+func filterChatOutput(out map[string]any) map[string]any {
+	filtered := map[string]any{}
+	if v, ok := out["content"]; ok {
+		filtered["content"] = v
+	}
+	if v, ok := out["finishReason"]; ok {
+		filtered["finishReason"] = v
+	}
+	if v, ok := out["usage"]; ok {
+		filtered["usage"] = v
+	}
+	return filtered
+}
+
+func filterCompleteOutput(out map[string]any) map[string]any {
+	filtered := map[string]any{}
+	// Map content->text if needed
+	if v, ok := out["text"]; ok {
+		filtered["text"] = v
+	} else if v, ok := out["content"]; ok {
+		filtered["text"] = v
+	}
+	if v, ok := out["finishReason"]; ok {
+		filtered["finishReason"] = v
+	}
+	if v, ok := out["usage"]; ok {
+		filtered["usage"] = v
+	}
+	return filtered
 }
 
 func main() {
