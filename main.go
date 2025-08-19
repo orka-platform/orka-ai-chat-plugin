@@ -4,12 +4,8 @@ import (
 	"context"
 	"encoding/gob"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
-	"net"
-	"net/rpc"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -377,26 +373,7 @@ func filterCompleteOutput(out map[string]any) map[string]any {
 	return filtered
 }
 
-func main() {
-	port := flag.Int("port", 0, "TCP port for RPC server (required)")
-	flag.Parse()
-
-	if *port == 0 {
-		fmt.Fprintln(os.Stderr, "Missing required --port argument")
-		os.Exit(1)
-	}
-
-	err := rpc.Register(&LlmPlugin{})
-	if err != nil {
-		log.Fatalf("RPC register error: %v", err)
-	}
-
-	addr := fmt.Sprintf("127.0.0.1:%d", *port)
-	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		log.Fatalf("Failed to listen on %s: %v", addr, err)
-	}
-
-	fmt.Printf("LLM plugin listening on %s\n", addr)
-	rpc.Accept(listener)
+func OrkaCall(req sdk.Request, res *sdk.Response) error {
+	var t LlmPlugin
+	return t.CallMethod(req, res)
 }
